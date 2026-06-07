@@ -56,7 +56,7 @@ export default function AddDogModal({ onClose, onSaved }) {
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           <div>
             <label style={labelStyle}>Dog's name *</label>
-            <input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Lulu" />
+            <input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Tallulah" />
           </div>
           <div>
             <label style={labelStyle}>Breed</label>
@@ -65,7 +65,7 @@ export default function AddDogModal({ onClose, onSaved }) {
           <div style={{ display:'flex', gap:12 }}>
             <div style={{ flex:1 }}>
               <label style={labelStyle}>Owner's name *</label>
-              <input style={inputStyle} value={form.owner_name} onChange={e => set('owner_name', e.target.value)} placeholder="e.g. Luis Garcia" />
+              <input style={inputStyle} value={form.owner_name} onChange={e => set('owner_name', e.target.value)} placeholder="e.g. Jo Shmo" />
             </div>
             <div style={{ flex:1 }}>
               <label style={labelStyle}>Owner's email *</label>
