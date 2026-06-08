@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import BehaviorChart from '../components/shared/BehaviorChart';
+import HomeworkTracker from '../components/client/HomeworkTracker';
 
-const COLORS = ['#5B4CF5','#1D9E75','#E24B4A','#D85A30','#185FA5','#993556'];
+const COLORS = ['var(--teal)','var(--coral)','#185FA5','#993556','#854F0B','#3B6D11'];
 
 function initials(name) {
   return name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2) || '?';
+}
+
+function daysBetween(d1, d2) {
+  return Math.ceil((new Date(d2) - new Date(d1)) / (1000*60*60*24));
 }
 
 export default function ClientDogView() {
@@ -16,102 +21,99 @@ export default function ClientDogView() {
   const [dog, setDog] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [metrics, setMetrics] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [homeworkLogs, setHomeworkLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('progress');
-  const [homeworkStatus, setHomeworkStatus] = useState({});
+  const [activeTab, setActiveTab] = useState('homework');
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [dogData, sessionData] = await Promise.all([
-          apiFetch(`/api/dogs/${dogId}`),
-          apiFetch(`/api/sessions?dog_id=${dogId}`),
-        ]);
-        setDog(dogData);
-        setMetrics(dogData.metrics || []);
-        setSessions(sessionData);
-        // Load saved homework completion status from localStorage
-        const saved = JSON.parse(localStorage.getItem(`homework_${dogId}`) || '{}');
-        setHomeworkStatus(saved);
-      } catch (err) { console.error(err); }
-      finally { setLoading(false); }
-    }
-    load();
+  const load = useCallback(async () => {
+    try {
+      const [dogData, sessionData, reportData, hwData] = await Promise.all([
+        apiFetch(`/api/dogs/${dogId}`),
+        apiFetch(`/api/sessions?dog_id=${dogId}`),
+        apiFetch(`/api/reports?dog_id=${dogId}`),
+        apiFetch(`/api/homework?dog_id=${dogId}`),
+      ]);
+      setDog(dogData);
+      setMetrics(dogData.metrics || []);
+      setSessions(sessionData);
+      setReports(reportData);
+      setHomeworkLogs(hwData);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   }, [dogId]);
 
-  function toggleHomework(sessionId) {
-    const updated = { ...homeworkStatus, [sessionId]: !homeworkStatus[sessionId] };
-    setHomeworkStatus(updated);
-    localStorage.setItem(`homework_${dogId}`, JSON.stringify(updated));
-  }
+  useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div style={{ padding:32, color:'#6b7280' }}>Loading...</div>;
-  if (!dog) return <div style={{ padding:32, color:'#dc2626' }}>Dog not found.</div>;
+  if (loading) return <div className="loading-screen">Loading...</div>;
+  if (!dog) return <div style={{ padding:32 }}>Dog not found.</div>;
 
   const publishedSessions = sessions.filter(s => s.is_published);
   const homeworkSessions = publishedSessions.filter(s => s.homework);
-  const pendingHomework = homeworkSessions.filter(s => !homeworkStatus[s.id]);
-  const latestHomework = pendingHomework[0];
+
+  // Find next session date from reports or sessions
+  const upcomingReport = reports.find(r => r.next_session && new Date(r.next_session) > new Date());
+  const daysUntilNext = upcomingReport ? daysBetween(new Date(), new Date(upcomingReport.next_session)) : null;
 
   const tabStyle = (t) => ({
-    padding:'10px 16px', fontSize:13, cursor:'pointer', border:'none', background:'none',
-    borderBottom: activeTab===t ? '2px solid #5B4CF5' : '2px solid transparent',
-    color: activeTab===t ? '#5B4CF5' : '#6b7280',
-    fontWeight: activeTab===t ? 500 : 400, fontFamily:'inherit'
+    padding:'10px 18px', fontSize:13, cursor:'pointer', border:'none', background:'none',
+    borderBottom: activeTab===t ? '2px solid var(--teal)' : '2px solid transparent',
+    color: activeTab===t ? 'var(--teal)' : 'var(--gray-text)',
+    fontWeight: activeTab===t ? 500 : 400, fontFamily:'var(--font-sans)',
+    transition:'color .15s'
   });
 
   return (
     <div style={{ maxWidth:800, margin:'0 auto' }}>
-      <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'#6b7280', fontSize:13, cursor:'pointer', padding:'0 0 16px', display:'flex', alignItems:'center', gap:4 }}>← Back</button>
+      <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'var(--gray-text)', fontSize:13, cursor:'pointer', padding:'0 0 16px', display:'flex', alignItems:'center', gap:4, fontFamily:'var(--font-sans)' }}>
+        ← Back
+      </button>
 
-      {/* Header */}
-      <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:12, padding:20, marginBottom:16, display:'flex', alignItems:'center', gap:16 }}>
-        <div style={{ width:52, height:52, borderRadius:'50%', background:'#ede9fe', color:'#5B4CF5', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:600, fontSize:17, flexShrink:0 }}>
+      {/* Header card */}
+      <div style={{ background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-md)', padding:20, marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'var(--card-shadow)' }}>
+        <div style={{ width:54, height:54, borderRadius:'50%', background:'var(--teal-light)', color:'var(--teal)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:600, fontSize:18, flexShrink:0 }}>
           {initials(dog.name)}
         </div>
-        <div>
-          <h1 style={{ fontSize:20, fontWeight:600, margin:0 }}>{dog.name}</h1>
-          <p style={{ fontSize:13, color:'#6b7280', margin:'3px 0 0' }}>{dog.breed && `${dog.breed} · `}{publishedSessions.length} sessions logged</p>
+        <div style={{ flex:1 }}>
+          <h1 style={{ fontFamily:'var(--font-serif)', fontSize:22, color:'var(--brown)', margin:0 }}>{dog.name}</h1>
+          <p style={{ fontSize:13, color:'var(--gray-text)', margin:'3px 0 0' }}>
+            {dog.breed && `${dog.breed} · `}{publishedSessions.length} sessions
+          </p>
         </div>
-        {pendingHomework.length > 0 && (
-          <div style={{ marginLeft:'auto', background:'#fef9c3', border:'1px solid #fde047', borderRadius:8, padding:'6px 12px', fontSize:12, color:'#854d0e', fontWeight:500 }}>
-            📋 {pendingHomework.length} homework pending
+        {daysUntilNext !== null && (
+          <div style={{ textAlign:'center', background:'var(--teal-light)', borderRadius:'var(--radius-sm)', padding:'10px 16px' }}>
+            <div style={{ fontSize:22, fontWeight:600, color:'var(--teal)', fontFamily:'var(--font-serif)' }}>{daysUntilNext}</div>
+            <div style={{ fontSize:11, color:'var(--teal-dark)' }}>days to next session</div>
           </div>
         )}
       </div>
 
-      {/* Current homework callout */}
-      {latestHomework && (
-        <div style={{ background:'#ede9fe', border:'1px solid #c4b5fd', borderRadius:10, padding:'14px 18px', marginBottom:16, display:'flex', alignItems:'flex-start', gap:12 }}>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:12, fontWeight:500, color:'#5B4CF5', marginBottom:4 }}>📋 Current homework</div>
-            <p style={{ fontSize:14, color:'#3730a3', margin:0 }}>{latestHomework.homework}</p>
-            <div style={{ fontSize:11, color:'#7c3aed', marginTop:4 }}>
-              Assigned {new Date(latestHomework.session_date).toLocaleDateString('en-US', { month:'short', day:'numeric' })}
-            </div>
-          </div>
-          <button onClick={() => toggleHomework(latestHomework.id)} style={{ background:'#5B4CF5', color:'#fff', border:'none', borderRadius:8, padding:'7px 14px', fontSize:12, cursor:'pointer', flexShrink:0, fontFamily:'inherit' }}>
-            Mark complete ✓
-          </button>
-        </div>
-      )}
-
       {/* Tabs */}
-      <div style={{ borderBottom:'1px solid #e5e7eb', marginBottom:20, display:'flex' }}>
-        <button style={tabStyle('progress')} onClick={() => setActiveTab('progress')}>Progress</button>
-        <button style={tabStyle('sessions')} onClick={() => setActiveTab('sessions')}>Session Notes ({publishedSessions.length})</button>
+      <div style={{ borderBottom:'1px solid var(--gray-border)', marginBottom:20, display:'flex' }}>
         <button style={tabStyle('homework')} onClick={() => setActiveTab('homework')}>
-          Homework {pendingHomework.length > 0 && <span style={{ background:'#5B4CF5', color:'#fff', borderRadius:10, padding:'1px 6px', fontSize:10, marginLeft:4 }}>{pendingHomework.length}</span>}
+          Practice Log {homeworkSessions.length > 0 && <span style={{ background:'var(--coral)', color:'white', borderRadius:10, padding:'1px 7px', fontSize:10, marginLeft:4 }}>{homeworkSessions.length}</span>}
         </button>
+        <button style={tabStyle('progress')} onClick={() => setActiveTab('progress')}>Progress</button>
+        <button style={tabStyle('reports')} onClick={() => setActiveTab('reports')}>Session Reports ({reports.length})</button>
+        <button style={tabStyle('sessions')} onClick={() => setActiveTab('sessions')}>Notes ({publishedSessions.length})</button>
       </div>
 
-      {/* Progress tab */}
+      {activeTab === 'homework' && (
+        <HomeworkTracker
+          dog={dog}
+          sessions={homeworkSessions}
+          homeworkLogs={homeworkLogs}
+          onLogUpdated={load}
+          apiFetch={apiFetch}
+        />
+      )}
+
       {activeTab === 'progress' && (
         <div>
           {metrics.length === 0 || publishedSessions.length === 0 ? (
-            <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:40, textAlign:'center', color:'#9ca3af' }}>
-              <div style={{ fontSize:32, marginBottom:10 }}>📈</div>
-              <p style={{ fontSize:14, margin:0, color:'#6b7280' }}>Progress charts will appear here once your trainer logs sessions.</p>
+            <div style={{ border:'2px dashed var(--gray-border)', borderRadius:'var(--radius-md)', padding:40, textAlign:'center', background:'var(--white)' }}>
+              <p style={{ fontFamily:'var(--font-serif)', fontSize:18, color:'var(--teal)', margin:'0 0 8px' }}>Progress charts coming soon</p>
+              <p style={{ fontSize:14, color:'var(--gray-text)', margin:0 }}>Charts will appear once your trainer logs sessions with behavior scores.</p>
             </div>
           ) : (
             <>
@@ -122,37 +124,52 @@ export default function ClientDogView() {
                   </span>
                 ))}
               </div>
-              <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:12, padding:20 }}>
-                <BehaviorChart sessions={publishedSessions} metrics={metrics.map((m,i) => ({ ...m, color: COLORS[i%COLORS.length] }))} height={280} />
+              <div style={{ background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-md)', padding:20, boxShadow:'var(--card-shadow)' }}>
+                <BehaviorChart sessions={publishedSessions} metrics={metrics.map((m,i) => ({ ...m, color:COLORS[i%COLORS.length] }))} height={280} />
               </div>
             </>
           )}
         </div>
       )}
 
-      {/* Sessions tab */}
-      {activeTab === 'sessions' && (
-        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          {publishedSessions.length === 0 ? (
-            <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:32, textAlign:'center', color:'#9ca3af' }}>
-              <p style={{ fontSize:14, margin:0 }}>No session notes shared yet.</p>
+      {activeTab === 'reports' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          {reports.length === 0 ? (
+            <div style={{ border:'2px dashed var(--gray-border)', borderRadius:'var(--radius-md)', padding:40, textAlign:'center', background:'var(--white)' }}>
+              <p style={{ fontFamily:'var(--font-serif)', fontSize:18, color:'var(--teal)', margin:'0 0 8px' }}>No reports yet</p>
+              <p style={{ fontSize:14, color:'var(--gray-text)', margin:0 }}>Your trainer will share session reports here.</p>
             </div>
-          ) : publishedSessions.map(s => (
-            <div key={s.id} style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, padding:'16px 20px' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
-                <span style={{ fontSize:13, fontWeight:500 }}>
-                  {new Date(s.session_date).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })}
-                </span>
-                {s.duration_mins && <span style={{ fontSize:12, color:'#9ca3af' }}>{s.duration_mins} min</span>}
+          ) : reports.map(r => (
+            <div key={r.id} style={{ background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-md)', padding:'18px 20px', boxShadow:'var(--card-shadow)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
+                <div>
+                  <h3 style={{ fontFamily:'var(--font-serif)', fontSize:17, color:'var(--brown)', margin:0 }}>{r.title}</h3>
+                  <div style={{ fontSize:12, color:'var(--gray-text)', marginTop:3 }}>
+                    {new Date(r.report_date).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}
+                  </div>
+                </div>
               </div>
-              {s.summary && <p style={{ fontSize:14, color:'#374151', margin:'0 0 10px', lineHeight:1.6 }}>{s.summary}</p>}
-              {s.scores && s.scores.length > 0 && (
-                <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
-                  {s.scores.map((sc, i) => {
-                    const metric = metrics.find(m => m.id === sc.metric_id);
-                    const color = COLORS[metrics.indexOf(metric) % COLORS.length];
-                    return metric ? <span key={i} style={{ fontSize:11, padding:'3px 10px', borderRadius:12, background:color+'18', color }}>{metric.name}: {sc.score}</span> : null;
-                  })}
+              {(r.sections||[]).filter(s => s.content?.trim()).map((s, i) => (
+                <div key={i} style={{ marginBottom:12 }}>
+                  {s.title && <div className="section-label" style={{ marginBottom:4 }}>{s.title}</div>}
+                  <p style={{ fontSize:14, color:'var(--brown)', margin:0, lineHeight:1.6 }}>{s.content}</p>
+                </div>
+              ))}
+              {r.overall_notes && (
+                <div style={{ marginTop:12, paddingTop:12, borderTop:'1px solid var(--cream-dark)' }}>
+                  <div className="section-label" style={{ marginBottom:4 }}>Overall Notes</div>
+                  <p style={{ fontSize:14, color:'var(--brown)', margin:0, lineHeight:1.6 }}>{r.overall_notes}</p>
+                </div>
+              )}
+              {r.homework && (
+                <div style={{ marginTop:12, background:'var(--teal-light)', borderRadius:'var(--radius-sm)', padding:'12px 16px' }}>
+                  <div className="section-label" style={{ color:'var(--teal-dark)', marginBottom:4 }}>Homework</div>
+                  <p style={{ fontSize:14, color:'var(--teal-dark)', margin:0 }}>{r.homework}</p>
+                </div>
+              )}
+              {r.next_session && (
+                <div style={{ marginTop:10, fontSize:12, color:'var(--gray-text)' }}>
+                  Next session: {new Date(r.next_session).toLocaleDateString('en-US', { month:'long', day:'numeric' })}
                 </div>
               )}
             </div>
@@ -160,32 +177,29 @@ export default function ClientDogView() {
         </div>
       )}
 
-      {/* Homework tab */}
-      {activeTab === 'homework' && (
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {homeworkSessions.length === 0 ? (
-            <div style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:40, textAlign:'center', color:'#9ca3af' }}>
-              <div style={{ fontSize:32, marginBottom:10 }}>📋</div>
-              <p style={{ fontSize:14, margin:0 }}>No homework assigned yet.</p>
+      {activeTab === 'sessions' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {publishedSessions.length === 0 ? (
+            <div style={{ border:'2px dashed var(--gray-border)', borderRadius:'var(--radius-md)', padding:40, textAlign:'center', background:'var(--white)' }}>
+              <p style={{ fontSize:14, color:'var(--gray-text)', margin:0 }}>No session notes shared yet.</p>
             </div>
-          ) : homeworkSessions.map(s => {
-            const done = homeworkStatus[s.id];
-            return (
-              <div key={s.id} style={{ background: done ? '#f0fdf4' : '#fff', border:`1px solid ${done ? '#86efac' : '#e5e7eb'}`, borderRadius:10, padding:'14px 18px', display:'flex', alignItems:'flex-start', gap:14, opacity: done ? .7 : 1 }}>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:11, color:'#9ca3af', marginBottom:4 }}>
-                    {new Date(s.session_date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}
-                  </div>
-                  <p style={{ fontSize:14, color: done ? '#16a34a' : '#111827', margin:0, textDecoration: done ? 'line-through' : 'none', lineHeight:1.5 }}>{s.homework}</p>
-                </div>
-                <button onClick={() => toggleHomework(s.id)} style={{
-                  padding:'6px 12px', borderRadius:8, border:`1px solid ${done ? '#86efac' : '#e5e7eb'}`,
-                  background: done ? '#dcfce7' : '#fff', color: done ? '#16a34a' : '#6b7280',
-                  fontSize:12, cursor:'pointer', flexShrink:0, fontFamily:'inherit'
-                }}>{done ? '✓ Done' : 'Mark done'}</button>
+          ) : publishedSessions.map(s => (
+            <div key={s.id} style={{ background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-md)', padding:'16px 20px', boxShadow:'var(--card-shadow)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
+                <span style={{ fontFamily:'var(--font-serif)', fontSize:14, fontWeight:500, color:'var(--brown)' }}>
+                  {new Date(s.session_date).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })}
+                </span>
+                {s.duration_mins && <span style={{ fontSize:12, color:'var(--gray-text)' }}>{s.duration_mins} min</span>}
               </div>
-            );
-          })}
+              {s.summary && <p style={{ fontSize:14, color:'var(--brown)', margin:'0 0 10px', lineHeight:1.6 }}>{s.summary}</p>}
+              {s.homework && (
+                <div style={{ background:'var(--teal-light)', borderRadius:'var(--radius-sm)', padding:'10px 14px' }}>
+                  <div className="section-label" style={{ color:'var(--teal-dark)', marginBottom:3 }}>Homework</div>
+                  <p style={{ fontSize:13, color:'var(--teal-dark)', margin:0 }}>{s.homework}</p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>

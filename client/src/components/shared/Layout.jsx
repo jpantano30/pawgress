@@ -8,50 +8,44 @@ export default function Layout() {
   const { user } = useUser();
   const { role } = useRole();
 
-  const isTrainer = role === 'trainer';
-
   return (
-    <div style={{ minHeight:'100vh', background:'#f9fafb' }}>
+    <div style={{ minHeight:'100vh', background:'var(--cream)' }}>
       <nav style={{
-        background:'#fff', borderBottom:'1px solid #e5e7eb',
-        padding:'0 24px', height:56,
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        position:'sticky', top:0, zIndex:40
+        background:'var(--white)',
+        borderBottom:'1px solid var(--gray-border)',
+        padding:'0 32px',
+        height:60,
+        display:'flex',
+        alignItems:'center',
+        justifyContent:'space-between',
+        position:'sticky',
+        top:0,
+        zIndex:40,
+        boxShadow:'0 1px 3px rgba(61,43,31,0.06)'
       }}>
-        {/* Logo */}
-        <div onClick={() => navigate('/')} style={{
-          display:'flex', alignItems:'center', gap:8,
-          cursor:'pointer', userSelect:'none'
-        }}>
-          <div style={{
-            width:28, height:28, borderRadius:8, background:'#5B4CF5',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:14
-          }}>🐾</div>
-          <span style={{ fontWeight:600, fontSize:15, color:'#111827' }}>Pawgress</span>
+        <div onClick={() => navigate('/')} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', userSelect:'none' }}>
+          <span style={{ fontSize:22 }}>🐾</span>
+          <span style={{ fontFamily:'var(--font-serif)', fontWeight:500, fontSize:17, color:'var(--brown)' }}>Pawgress</span>
         </div>
 
-        {/* Nav links - trainer only */}
-        {isTrainer && (
-          <div style={{ display:'flex', gap:4 }}>
-            {[
-              { label:'Dashboard', path:'/' },
-            ].map(({ label, path }) => (
+        {role === 'trainer' && (
+          <div style={{ display:'flex', gap:2 }}>
+            {[{ label:'Dashboard', path:'/' }].map(({ label, path }) => (
               <button key={path} onClick={() => navigate(path)} style={{
-                background: location.pathname === path ? '#f3f4f6' : 'none',
-                border:'none', borderRadius:8, padding:'6px 14px',
-                fontSize:13, color: location.pathname === path ? '#111827' : '#6b7280',
+                background: location.pathname === path ? 'var(--teal-light)' : 'none',
+                border:'none', borderRadius:'var(--radius-sm)', padding:'6px 16px',
+                fontSize:13, color: location.pathname === path ? 'var(--teal)' : 'var(--gray-text)',
                 fontWeight: location.pathname === path ? 500 : 400,
-                cursor:'pointer', fontFamily:'inherit'
+                cursor:'pointer', fontFamily:'var(--font-sans)',
+                transition:'all .15s'
               }}>{label}</button>
             ))}
           </div>
         )}
 
-        {/* Right side */}
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           {user && (
-            <span style={{ fontSize:13, color:'#6b7280' }}>
+            <span style={{ fontSize:13, color:'var(--gray-text)' }}>
               {user.firstName || user.primaryEmailAddress?.emailAddress}
             </span>
           )}
@@ -59,7 +53,7 @@ export default function Layout() {
         </div>
       </nav>
 
-      <main style={{ padding:'28px 24px', maxWidth:960, margin:'0 auto' }}>
+      <main style={{ padding:'32px 24px', maxWidth:960, margin:'0 auto' }}>
         <Outlet />
       </main>
     </div>

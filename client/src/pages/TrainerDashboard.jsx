@@ -1,105 +1,112 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { useApi } from '../hooks/useApi';
 import AddDogModal from '../components/trainer/AddDogModal';
 
-const COLORS = ['#5B4CF5','#1D9E75','#E24B4A','#D85A30','#185FA5','#993556'];
+const COLORS = ['var(--teal)','var(--coral)','#185FA5','#993556','#854F0B','#3B6D11'];
+const COLOR_BG = ['var(--teal-light)','var(--coral-light)','#E6F1FB','#FBEAF0','#FAEEDA','#EAF3DE'];
 
 function initials(name) {
   return name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2) || '?';
 }
 
-function StatCard({ label, value, sub, color }) {
-  return (
-    <div style={{ background:'#f3f4f6', borderRadius:10, padding:'14px 18px' }}>
-      <div style={{ fontSize:12, color:'#6b7280', marginBottom:6 }}>{label}</div>
-      <div style={{ fontSize:26, fontWeight:600, color: color || '#111827' }}>{value}</div>
-      {sub && <div style={{ fontSize:11, color:'#9ca3af', marginTop:2 }}>{sub}</div>}
-    </div>
-  );
-}
-
 export default function TrainerDashboard() {
   const { apiFetch } = useApi();
+  const { user } = useUser();
   const navigate = useNavigate();
   const [dogs, setDogs] = useState([]);
-  const [stats, setStats] = useState({ sessions_this_month: 0, avg_rating: null, drafts: 0 });
+  const [stats, setStats] = useState({ sessions_this_month:0, avg_rating:null, drafts:0 });
+  const [inviteCode, setInviteCode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddDog, setShowAddDog] = useState(false);
 
   async function loadData() {
     try {
-      const [dogsData, statsData] = await Promise.all([
+      const [dogsData, statsData, meData] = await Promise.all([
         apiFetch('/api/dogs'),
         apiFetch('/api/sessions/stats'),
+        apiFetch('/api/users/me'),
       ]);
       setDogs(dogsData);
       setStats(statsData);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+      setInviteCode(meData.invite_code);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   }
 
   useEffect(() => { loadData(); }, []);
 
-  if (loading) return <div style={{ padding:32, color:'#6b7280' }}>Loading...</div>;
+  if (loading) return <div className="loading-screen">Loading...</div>;
 
   return (
     <div style={{ maxWidth:900, margin:'0 auto' }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
-        <div>
-          <h1 style={{ fontSize:22, fontWeight:600, color:'#111827', margin:0 }}>Dashboard</h1>
-          <p style={{ fontSize:14, color:'#6b7280', margin:'4px 0 0' }}>Your active training clients</p>
-        </div>
-        <button onClick={() => setShowAddDog(true)} style={{
-          background:'#5B4CF5', color:'#fff', border:'none', borderRadius:8,
-          padding:'9px 18px', fontSize:14, fontWeight:500, cursor:'pointer'
-        }}>+ Add Dog</button>
+      <div style={{ marginBottom:28 }}>
+        <p className="section-label">Dashboard</p>
+        <h1 style={{ fontFamily:'var(--font-serif)', fontSize:28, color:'var(--teal)', marginTop:4 }}>
+          Hello{user?.firstName ? `, ${user.firstName}` : ''} 👋
+        </h1>
+        {inviteCode && (
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, marginTop:10, background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-sm)', padding:'6px 14px' }}>
+            <span style={{ fontSize:12, color:'var(--gray-text)' }}>Your invite code:</span>
+            <span style={{ fontWeight:600, fontSize:15, color:'var(--teal)', letterSpacing:'0.1em' }}>{inviteCode}</span>
+            <button onClick={() => navigator.clipboard.writeText(inviteCode)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--coral)', fontFamily:'var(--font-sans)' }}>Copy</button>
+          </div>
+        )}
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:28 }}>
-        <StatCard label="Active Dogs" value={dogs.length} sub={`${dogs.length} client${dogs.length !== 1 ? 's' : ''}`} />
-        <StatCard label="Sessions This Month" value={stats.sessions_this_month} sub="logged sessions" />
-        <StatCard label="Avg Rating" value={stats.avg_rating ? `${parseFloat(stats.avg_rating).toFixed(1)} ★` : '—'} sub="across all sessions" />
-        <StatCard label="Drafts" value={stats.drafts} sub="unpublished" color={stats.drafts > 0 ? '#D85A30' : undefined} />
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:32 }}>
+        {[
+          { label:'Active Dogs', value: dogs.length, sub:`${dogs.length} client${dogs.length!==1?'s':''}` },
+          { label:'Sessions This Month', value: stats.sessions_this_month || 0, sub:'logged sessions' },
+          { label:'Avg Rating', value: stats.avg_rating ? `${parseFloat(stats.avg_rating).toFixed(1)} ★` : '—', sub:'across all sessions' },
+          { label:'Drafts', value: stats.drafts || 0, sub:'unpublished', accent: stats.drafts > 0 },
+        ].map(({ label, value, sub, accent }) => (
+          <div key={label} style={{ background:'var(--white)', border:`1px solid ${accent ? 'var(--coral)' : 'var(--gray-border)'}`, borderRadius:'var(--radius-md)', padding:'16px 18px', boxShadow:'var(--card-shadow)' }}>
+            <div style={{ fontSize:11, color:'var(--gray-text)', marginBottom:6, textTransform:'uppercase', letterSpacing:'.06em' }}>{label}</div>
+            <div style={{ fontSize:24, fontWeight:500, color: accent ? 'var(--coral)' : 'var(--brown)', fontFamily:'var(--font-serif)' }}>{value}</div>
+            <div style={{ fontSize:11, color:'var(--gray-text)', marginTop:2 }}>{sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+        <p className="section-label">Active Dogs</p>
+        <button onClick={() => setShowAddDog(true)} style={{ background:'var(--coral)', color:'white', border:'none', borderRadius:'var(--radius-sm)', padding:'8px 18px', fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:'var(--font-sans)' }}>
+          + Add Dog
+        </button>
       </div>
 
       {dogs.length === 0 ? (
-        <div style={{ border:'2px dashed #e5e7eb', borderRadius:12, padding:48, textAlign:'center', color:'#9ca3af' }}>
+        <div style={{ border:'2px dashed var(--gray-border)', borderRadius:'var(--radius-md)', padding:48, textAlign:'center', background:'var(--white)' }}>
           <div style={{ fontSize:40, marginBottom:12 }}>🐶</div>
-          <p style={{ fontSize:16, fontWeight:500, color:'#6b7280', margin:'0 0 6px' }}>No dogs yet</p>
-          <p style={{ fontSize:14, margin:'0 0 20px' }}>Add your first client dog to get started</p>
-          <button onClick={() => setShowAddDog(true)} style={{
-            background:'#5B4CF5', color:'#fff', border:'none', borderRadius:8,
-            padding:'9px 18px', fontSize:14, fontWeight:500, cursor:'pointer'
-          }}>+ Add Your First Dog</button>
+          <p style={{ fontFamily:'var(--font-serif)', fontSize:18, color:'var(--teal)', margin:'0 0 6px' }}>No dogs yet</p>
+          <p style={{ fontSize:14, color:'var(--gray-text)', margin:'0 0 20px' }}>Add your first client dog to get started</p>
+          <button onClick={() => setShowAddDog(true)} style={{ background:'var(--coral)', color:'white', border:'none', borderRadius:'var(--radius-sm)', padding:'10px 22px', fontSize:14, fontWeight:500, cursor:'pointer', fontFamily:'var(--font-sans)' }}>
+            + Add Your First Dog
+          </button>
         </div>
       ) : (
-        <>
-          <h2 style={{ fontSize:14, fontWeight:500, color:'#111827', marginBottom:12 }}>Active Dogs</h2>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
-            {dogs.map((dog, i) => (
-              <div key={dog.id} onClick={() => navigate(`/dogs/${dog.id}`)}
-                style={{ border:'1px solid #e5e7eb', borderRadius:12, padding:16, cursor:'pointer', background:'#fff' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor='#5B4CF5'}
-                onMouseLeave={e => e.currentTarget.style.borderColor='#e5e7eb'}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-                  <div style={{ width:38, height:38, borderRadius:'50%', background:COLORS[i%COLORS.length]+'22', color:COLORS[i%COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', fontWeight:600, fontSize:13, flexShrink:0 }}>
-                    {initials(dog.name)}
-                  </div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:500, fontSize:14 }}>{dog.name}</div>
-                    <div style={{ fontSize:12, color:'#6b7280' }}>{dog.owner_name}{dog.breed ? ` · ${dog.breed}` : ''}</div>
-                  </div>
-                  <span style={{ fontSize:11, padding:'3px 8px', borderRadius:20, background:'#dcfce7', color:'#166534' }}>Active</span>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14 }}>
+          {dogs.map((dog, i) => (
+            <div key={dog.id} onClick={() => navigate(`/dogs/${dog.id}`)}
+              style={{ background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-md)', padding:18, cursor:'pointer', boxShadow:'var(--card-shadow)', transition:'all .15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='var(--teal)'; e.currentTarget.style.boxShadow='0 2px 8px rgba(45,139,114,0.12)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='var(--gray-border)'; e.currentTarget.style.boxShadow='var(--card-shadow)'; }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
+                <div style={{ width:40, height:40, borderRadius:'50%', background:COLOR_BG[i%COLOR_BG.length], color:COLORS[i%COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', fontWeight:600, fontSize:13, flexShrink:0, fontFamily:'var(--font-sans)' }}>
+                  {initials(dog.name)}
                 </div>
-                {dog.notes && <p style={{ fontSize:12, color:'#9ca3af', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{dog.notes}</p>}
+                <div style={{ flex:1 }}>
+                  <div style={{ fontFamily:'var(--font-serif)', fontSize:16, color:'var(--brown)', fontWeight:500 }}>{dog.name}</div>
+                  <div style={{ fontSize:12, color:'var(--gray-text)' }}>{dog.owner_name}{dog.breed ? ` · ${dog.breed}` : ''}</div>
+                </div>
+                <span className="badge badge-green">Active</span>
               </div>
-            ))}
-          </div>
-        </>
+              {dog.notes && <p style={{ fontSize:12, color:'var(--gray-text)', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', paddingTop:8, borderTop:'1px solid var(--cream-dark)' }}>{dog.notes}</p>}
+            </div>
+          ))}
+        </div>
       )}
 
       {showAddDog && <AddDogModal onClose={() => setShowAddDog(false)} onSaved={() => { setShowAddDog(false); loadData(); }} />}
