@@ -91,7 +91,7 @@ export default function DogProfile() {
           </p>
           {dog.notes && <p style={{ fontSize:13, color:'#9ca3af', margin:'4px 0 0' }}>{dog.notes}</p>}
         </div>
-        <div style={{ display:'flex', gap:8' }}>
+        <div style={{ display:'flex', gap:8 }}>
           <button onClick={() => setShowEditDog(true)} style={{ background:'none', border:'1px solid #e5e7eb', borderRadius:8, padding:'7px 14px', fontSize:13, cursor:'pointer', color:'#374151', fontFamily:'inherit' }}>Edit</button>
           <button onClick={() => setShowLogSession(true)} style={{ background:'#5B4CF5', color:'#fff', border:'none', borderRadius:8, padding:'9px 18px', fontSize:14, fontWeight:500, cursor:'pointer' }}>+ Log Session</button>
         </div>
@@ -169,7 +169,7 @@ export default function DogProfile() {
                     </div>
                   )}
                 </div>
-                <div style={{ display:'flex', gap:6', alignItems:'center', flexShrink:0 }}>
+                <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0 }}>
                   <button onClick={() => togglePublish(s)} style={{
                     fontSize:11, padding:'3px 10px', borderRadius:12, border:'none', cursor:'pointer', fontFamily:'inherit',
                     background: s.is_published ? '#dcfce7' : '#fef9c3',
