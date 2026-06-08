@@ -130,6 +130,9 @@ export default function DogProfile() {
           Reports ({reports.length}){drafts.length>0 && <span style={{ background:'var(--coral)', color:'white', borderRadius:10, padding:'1px 6px', fontSize:10, marginLeft:4 }}>{drafts.length}</span>}
         </button>
         <button style={tabStyle('homework')} onClick={() => setActiveTab('homework')}>Homework</button>
+        <button style={tabStyle('intake')} onClick={() => navigate(`/dogs/${dogId}/intake`)}>
+          Intake {!dog.intake_completed_at && <span style={{ background:'var(--coral)', color:'white', borderRadius:10, padding:'1px 6px', fontSize:10, marginLeft:4 }}>!</span>}
+        </button>
       </div>
 
       {/* Progress tab */}

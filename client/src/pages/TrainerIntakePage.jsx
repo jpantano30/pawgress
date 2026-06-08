@@ -48,12 +48,20 @@ export default function TrainerIntakePage() {
         <div style={{ border:'2px dashed var(--gray-border)', borderRadius:'var(--radius-md)', padding:48, textAlign:'center', background:'var(--white)' }}>
           <div style={{ fontSize:36, marginBottom:12 }}>📋</div>
           <p style={{ fontFamily:'var(--font-serif)', fontSize:18, color:'var(--teal)', margin:'0 0 8px' }}>No intake yet</p>
-          <p style={{ fontSize:14, color:'var(--gray-text)', margin:'0 0 20px' }}>
-            Share this link with your client so they can fill out their intake form:<br/>
-            <a href={`${window.location.origin}/dogs/${dogId}/intake`} target="_blank" style={{ color:'var(--teal)', wordBreak:'break-all' }}>
-              {window.location.origin}/dogs/{dogId}/intake
-            </a>
+          <p style={{ fontSize:14, color:'var(--gray-text)', margin:'0 0 16px' }}>
+            Send your client this link so they can fill out their intake form. They'll log in to Pawgress and land directly on the form.
           </p>
+          <div style={{ display:'flex', alignItems:'center', gap:10, background:'var(--cream)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-sm)', padding:'10px 14px', marginBottom:20 }}>
+            <span style={{ fontSize:13, color:'var(--gray-text)', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              {window.location.origin}/dogs/{dogId}/intake
+            </span>
+            <button onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/dogs/${dogId}/intake`);
+              alert('Link copied! Paste it in a text or email to your client.');
+            }} style={{ background:'var(--teal)', color:'white', border:'none', borderRadius:'var(--radius-sm)', padding:'7px 16px', fontSize:13, cursor:'pointer', fontFamily:'var(--font-sans)', flexShrink:0 }}>
+              Copy link
+            </button>
+          </div>
           <button onClick={() => setEditing(true)} style={{ background:'var(--coral)', color:'white', border:'none', borderRadius:'var(--radius-sm)', padding:'10px 22px', fontSize:14, cursor:'pointer', fontFamily:'var(--font-sans)' }}>
             Fill in myself
           </button>

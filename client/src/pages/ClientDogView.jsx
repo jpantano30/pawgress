@@ -96,6 +96,9 @@ export default function ClientDogView() {
         <button style={tabStyle('progress')} onClick={() => setActiveTab('progress')}>Progress</button>
         <button style={tabStyle('reports')} onClick={() => setActiveTab('reports')}>Session Reports ({reports.length})</button>
         <button style={tabStyle('sessions')} onClick={() => setActiveTab('sessions')}>Notes ({publishedSessions.length})</button>
+        <button style={tabStyle('intake')} onClick={() => navigate(`/dogs/${dogId}/intake`)}>
+          My Intake {!dog.intake_completed_at && <span style={{ background:'var(--coral)', color:'white', borderRadius:10, padding:'1px 6px', fontSize:10, marginLeft:4 }}>!</span>}
+        </button>
       </div>
 
       {activeTab === 'homework' && (
