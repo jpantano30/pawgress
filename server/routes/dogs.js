@@ -121,3 +121,20 @@ router.patch('/:id', async (req, res, next) => {
 });
 
 export default router;
+
+// PATCH /api/dogs/:id/intake — save intake form (client or trainer)
+router.patch('/:id/intake', async (req, res, next) => {
+  try {
+    const { intake_data } = req.body;
+    const { rows: [dog] } = await pool.query(
+      `UPDATE dogs SET
+        intake_data = $1::jsonb,
+        intake_completed_at = NOW(),
+        updated_at = NOW()
+       WHERE id = $2 RETURNING *`,
+      [JSON.stringify(intake_data), req.params.id]
+    );
+    if (!dog) return res.status(404).json({ error: 'Dog not found' });
+    res.json(dog);
+  } catch (err) { next(err); }
+});
