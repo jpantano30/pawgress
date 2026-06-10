@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import BehaviorChart from '../components/shared/BehaviorChart';
+import CueTracker from '../components/shared/CueTracker';
 import HomeworkTracker from '../components/client/HomeworkTracker';
 
 const COLORS = ['var(--teal)','var(--coral)','#185FA5','#993556','#854F0B','#3B6D11'];
@@ -23,22 +24,25 @@ export default function ClientDogView() {
   const [metrics, setMetrics] = useState([]);
   const [reports, setReports] = useState([]);
   const [homeworkLogs, setHomeworkLogs] = useState([]);
+  const [cues, setCues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('homework');
 
   const load = useCallback(async () => {
     try {
-      const [dogData, sessionData, reportData, hwData] = await Promise.all([
+      const [dogData, sessionData, reportData, hwData, cueData] = await Promise.all([
         apiFetch(`/api/dogs/${dogId}`),
         apiFetch(`/api/sessions?dog_id=${dogId}`),
         apiFetch(`/api/reports?dog_id=${dogId}`),
         apiFetch(`/api/homework?dog_id=${dogId}`),
+        apiFetch(`/api/cues?dog_id=${dogId}`),
       ]);
       setDog(dogData);
       setMetrics(dogData.metrics || []);
       setSessions(sessionData);
       setReports(reportData);
       setHomeworkLogs(hwData);
+      setCues(cueData);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }, [dogId]);
@@ -96,10 +100,15 @@ export default function ClientDogView() {
         <button style={tabStyle('progress')} onClick={() => setActiveTab('progress')}>Progress</button>
         <button style={tabStyle('reports')} onClick={() => setActiveTab('reports')}>Session Reports ({reports.length})</button>
         <button style={tabStyle('sessions')} onClick={() => setActiveTab('sessions')}>Notes ({publishedSessions.length})</button>
+        <button style={tabStyle('cues')} onClick={() => setActiveTab('cues')}>Cues ({cues.length})</button>
         <button style={tabStyle('intake')} onClick={() => navigate(`/dogs/${dogId}/intake`)}>
           My Intake {!dog.intake_completed_at && <span style={{ background:'var(--coral)', color:'white', borderRadius:10, padding:'1px 6px', fontSize:10, marginLeft:4 }}>!</span>}
         </button>
       </div>
+
+      {activeTab === 'cues' && (
+        <CueTracker dog={dog} cues={cues} onCueUpdated={load} apiFetch={apiFetch} readOnly={false} />
+      )}
 
       {activeTab === 'homework' && (
         <HomeworkTracker

@@ -8,6 +8,7 @@ import sessionsRouter from './routes/sessions.js';
 import metricsRouter from './routes/metrics.js';
 import usersRouter from './routes/users.js';
 import homeworkRouter from './routes/homework.js';
+import cuesRouter from './routes/cues.js';
 import reportsRouter from './routes/reports.js';
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/dogs',     dogsRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/metrics',  metricsRouter);
 app.use('/api/homework', homeworkRouter);
+app.use('/api/cues',  cuesRouter);
 app.use('/api/reports',  reportsRouter);
 
 app.use((err, req, res, next) => {

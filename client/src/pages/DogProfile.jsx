@@ -6,6 +6,7 @@ import LogSessionModal from '../components/trainer/LogSessionModal';
 import AddMetricModal from '../components/trainer/AddMetricModal';
 import EditDogModal from '../components/trainer/EditDogModal';
 import SessionDetail from '../components/trainer/SessionDetail';
+import CueTracker from '../components/shared/CueTracker';
 
 const COLORS = ['var(--teal)','var(--coral)','#185FA5','#993556','#854F0B','#3B6D11'];
 
@@ -22,6 +23,7 @@ export default function DogProfile() {
   const [sessions, setSessions] = useState([]);
   const [metrics, setMetrics] = useState([]);
   const [reports, setReports] = useState([]);
+  const [cues, setCues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('progress');
   const [showLogSession, setShowLogSession] = useState(false);
@@ -31,15 +33,17 @@ export default function DogProfile() {
 
   async function loadData() {
     try {
-      const [dogData, sessionData, reportData] = await Promise.all([
+      const [dogData, sessionData, reportData, cueData] = await Promise.all([
         apiFetch(`/api/dogs/${dogId}`),
         apiFetch(`/api/sessions?dog_id=${dogId}`),
         apiFetch(`/api/reports?dog_id=${dogId}`),
+        apiFetch(`/api/cues?dog_id=${dogId}`),
       ]);
       setDog(dogData);
       setMetrics(dogData.metrics || []);
       setSessions(sessionData);
       setReports(reportData);
+      setCues(cueData);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
@@ -129,6 +133,7 @@ export default function DogProfile() {
         <button style={tabStyle('reports')} onClick={() => setActiveTab('reports')}>
           Reports ({reports.length}){drafts.length>0 && <span style={{ background:'var(--coral)', color:'white', borderRadius:10, padding:'1px 6px', fontSize:10, marginLeft:4 }}>{drafts.length}</span>}
         </button>
+        <button style={tabStyle('cues')} onClick={() => setActiveTab('cues')}>Cues ({cues.length})</button>
         <button style={tabStyle('homework')} onClick={() => setActiveTab('homework')}>Homework</button>
         <button style={tabStyle('intake')} onClick={() => navigate(`/dogs/${dogId}/intake`)}>
           Intake {!dog.intake_completed_at && <span style={{ background:'var(--coral)', color:'white', borderRadius:10, padding:'1px 6px', fontSize:10, marginLeft:4 }}>!</span>}
@@ -267,6 +272,10 @@ export default function DogProfile() {
             </div>
           ))}
         </div>
+      )}
+
+      {activeTab === 'cues' && (
+        <CueTracker dog={dog} cues={cues} onCueUpdated={loadData} apiFetch={apiFetch} readOnly={false} />
       )}
 
       {showLogSession && <LogSessionModal dog={dog} metrics={metrics} onClose={() => setShowLogSession(false)} onSaved={() => { setShowLogSession(false); loadData(); }} />}

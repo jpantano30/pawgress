@@ -11,6 +11,7 @@ import TrainerIntakePage from './pages/TrainerIntakePage';
 import ClientDashboard from './pages/ClientDashboard';
 import ClientDogView from './pages/ClientDogView';
 import ClientIntakePage from './pages/ClientIntakePage';
+import HelpPage from './pages/HelpPage';
 import Layout from './components/shared/Layout';
 
 function AppRoutes() {
@@ -27,6 +28,7 @@ function AppRoutes() {
           <Route path="dogs/:dogId/sessions/new" element={<NewSession />} />
           <Route path="dogs/:dogId/reports/:reportId" element={<ReportBuilder />} />
           <Route path="dogs/:dogId/intake" element={<TrainerIntakePage />} />
+          <Route path="help" element={<HelpPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
       </Routes>
@@ -39,6 +41,7 @@ function AppRoutes() {
         <Route index element={<ClientDashboard />} />
         <Route path="dogs/:dogId" element={<ClientDogView />} />
         <Route path="dogs/:dogId/intake" element={<ClientIntakePage />} />
+        <Route path="help" element={<HelpPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Route>
     </Routes>
@@ -49,13 +52,9 @@ export default function App() {
   return (
     <>
       <SignedOut>
-        <div className="auth-screen">
-          <SignIn routing="hash" />
-        </div>
+        <div className="auth-screen"><SignIn routing="hash" /></div>
       </SignedOut>
-      <SignedIn>
-        <AppRoutes />
-      </SignedIn>
+      <SignedIn><AppRoutes /></SignedIn>
     </>
   );
 }
