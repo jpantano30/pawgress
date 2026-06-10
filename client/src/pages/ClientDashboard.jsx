@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useApi } from '../hooks/useApi';
 import AddClientDogModal from '../components/client/AddClientDogModal';
+import WelcomeModal from '../components/shared/WelcomeModal';
 
 const COLORS = ['var(--teal)','var(--coral)','#185FA5','#993556'];
 const COLOR_BG = ['var(--teal-light)','var(--coral-light)','#E6F1FB','#FBEAF0'];
@@ -18,19 +19,31 @@ export default function ClientDashboard() {
   const [dogs, setDogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddDog, setShowAddDog] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   async function loadDogs() {
-    try { setDogs(await apiFetch('/api/dogs')); }
-    catch (err) { console.error(err); }
+    try {
+      const data = await apiFetch('/api/dogs');
+      setDogs(data);
+      const welcomed = localStorage.getItem('pawgress_welcomed_client');
+      if (!welcomed) setShowWelcome(true);
+    } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
 
   useEffect(() => { loadDogs(); }, []);
 
+  function dismissWelcome() {
+    setShowWelcome(false);
+    localStorage.setItem('pawgress_welcomed_client', '1');
+  }
+
   if (loading) return <div className="loading-screen">Loading...</div>;
 
   return (
     <div style={{ maxWidth:700, margin:'0 auto' }}>
+      {showWelcome && <WelcomeModal role="client" onDone={dismissWelcome} />}
+
       <div style={{ marginBottom:28 }}>
         <p className="section-label">My Training</p>
         <h1 style={{ fontFamily:'var(--font-serif)', fontSize:28, color:'var(--teal)', marginTop:4 }}>
@@ -58,8 +71,8 @@ export default function ClientDashboard() {
           {dogs.map((dog, i) => (
             <div key={dog.id} onClick={() => navigate(`/dogs/${dog.id}`)}
               style={{ background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-md)', padding:20, cursor:'pointer', boxShadow:'var(--card-shadow)', transition:'all .15s' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor='var(--teal)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor='var(--gray-border)'; }}>
+              onMouseEnter={e => e.currentTarget.style.borderColor='var(--teal)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor='var(--gray-border)'}>
               <div style={{ display:'flex', alignItems:'center', gap:14 }}>
                 <div style={{ width:48, height:48, borderRadius:'50%', background:COLOR_BG[i%COLOR_BG.length], color:COLORS[i%COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', fontWeight:600, fontSize:16, flexShrink:0 }}>
                   {initials(dog.name)}

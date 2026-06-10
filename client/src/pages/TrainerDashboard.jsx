@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useApi } from '../hooks/useApi';
 import AddDogModal from '../components/trainer/AddDogModal';
+import WelcomeModal from '../components/shared/WelcomeModal';
 
 const COLORS = ['var(--teal)','var(--coral)','#185FA5','#993556','#854F0B','#3B6D11'];
 const COLOR_BG = ['var(--teal-light)','var(--coral-light)','#E6F1FB','#FBEAF0','#FAEEDA','#EAF3DE'];
@@ -20,6 +21,8 @@ export default function TrainerDashboard() {
   const [inviteCode, setInviteCode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddDog, setShowAddDog] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   async function loadData() {
     try {
@@ -31,26 +34,51 @@ export default function TrainerDashboard() {
       setDogs(dogsData);
       setStats(statsData);
       setInviteCode(meData.invite_code);
+
+      // Show welcome modal on first visit ever
+      const welcomed = localStorage.getItem('pawgress_welcomed_trainer');
+      if (!welcomed) setShowWelcome(true);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }
 
   useEffect(() => { loadData(); }, []);
 
+  function dismissWelcome() {
+    setShowWelcome(false);
+    localStorage.setItem('pawgress_welcomed_trainer', '1');
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(inviteCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   if (loading) return <div className="loading-screen">Loading...</div>;
 
   return (
     <div style={{ maxWidth:900, margin:'0 auto' }}>
+      {showWelcome && <WelcomeModal role="trainer" onDone={dismissWelcome} />}
+
       <div style={{ marginBottom:28 }}>
         <p className="section-label">Dashboard</p>
         <h1 style={{ fontFamily:'var(--font-serif)', fontSize:28, color:'var(--teal)', marginTop:4 }}>
           Hello{user?.firstName ? `, ${user.firstName}` : ''} 👋
         </h1>
         {inviteCode && (
-          <div style={{ display:'inline-flex', alignItems:'center', gap:8, marginTop:10, background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-sm)', padding:'6px 14px' }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:10, marginTop:10, background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-sm)', padding:'8px 16px', boxShadow:'var(--card-shadow)' }}>
             <span style={{ fontSize:12, color:'var(--gray-text)' }}>Your invite code:</span>
-            <span style={{ fontWeight:600, fontSize:15, color:'var(--teal)', letterSpacing:'0.1em' }}>{inviteCode}</span>
-            <button onClick={() => navigator.clipboard.writeText(inviteCode)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--coral)', fontFamily:'var(--font-sans)' }}>Copy</button>
+            <span style={{ fontWeight:600, fontSize:16, color:'var(--teal)', letterSpacing:'0.12em', fontFamily:'var(--font-serif)' }}>{inviteCode}</span>
+            <button onClick={copyCode} style={{
+              background: copied ? 'var(--teal)' : 'var(--coral-light)',
+              color: copied ? 'white' : 'var(--coral)',
+              border:'none', borderRadius:'var(--radius-sm)', padding:'4px 12px',
+              fontSize:12, cursor:'pointer', fontFamily:'var(--font-sans)',
+              transition:'all .2s', fontWeight:500
+            }}>
+              {copied ? '✓ Copied!' : 'Copy'}
+            </button>
           </div>
         )}
       </div>
@@ -93,8 +121,8 @@ export default function TrainerDashboard() {
               style={{ background:'var(--white)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-md)', padding:18, cursor:'pointer', boxShadow:'var(--card-shadow)', transition:'all .15s' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor='var(--teal)'; e.currentTarget.style.boxShadow='0 2px 8px rgba(45,139,114,0.12)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor='var(--gray-border)'; e.currentTarget.style.boxShadow='var(--card-shadow)'; }}>
-              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
-                <div style={{ width:40, height:40, borderRadius:'50%', background:COLOR_BG[i%COLOR_BG.length], color:COLORS[i%COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', fontWeight:600, fontSize:13, flexShrink:0, fontFamily:'var(--font-sans)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom: dog.notes ? 10 : 0 }}>
+                <div style={{ width:40, height:40, borderRadius:'50%', background:COLOR_BG[i%COLOR_BG.length], color:COLORS[i%COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', fontWeight:600, fontSize:13, flexShrink:0 }}>
                   {initials(dog.name)}
                 </div>
                 <div style={{ flex:1 }}>

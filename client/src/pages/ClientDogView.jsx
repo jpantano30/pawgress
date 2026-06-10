@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import BehaviorChart from '../components/shared/BehaviorChart';
 import CueTracker from '../components/shared/CueTracker';
+import ProgressSummary from '../components/shared/ProgressSummary';
 import HomeworkTracker from '../components/client/HomeworkTracker';
 
 const COLORS = ['var(--teal)','var(--coral)','#185FA5','#993556','#854F0B','#3B6D11'];
@@ -122,6 +123,7 @@ export default function ClientDogView() {
 
       {activeTab === 'progress' && (
         <div>
+          <ProgressSummary dog={dog} sessions={publishedSessions} metrics={metrics} cues={cues} homeworkLogs={homeworkLogs} />
           {metrics.length === 0 || publishedSessions.length === 0 ? (
             <div style={{ border:'2px dashed var(--gray-border)', borderRadius:'var(--radius-md)', padding:40, textAlign:'center', background:'var(--white)' }}>
               <p style={{ fontFamily:'var(--font-serif)', fontSize:18, color:'var(--teal)', margin:'0 0 8px' }}>Progress charts coming soon</p>
