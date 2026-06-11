@@ -1,7 +1,5 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = 'Pawgress <notifications@pawgress.app>';
 const APP_URL = process.env.CLIENT_URL || 'https://pawgress-eight.vercel.app';
 
 async function send(to, subject, html) {
@@ -10,7 +8,11 @@ async function send(to, subject, html) {
     return;
   }
   try {
-    await resend.emails.send({ from: FROM, to, subject, html });
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: 'Pawgress <notifications@pawgress.app>',
+      to, subject, html
+    });
   } catch (err) {
     console.error('Email send failed:', err.message);
   }
