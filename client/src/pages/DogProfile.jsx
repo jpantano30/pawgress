@@ -106,6 +106,14 @@ export default function DogProfile() {
           <p style={{ fontSize:13, color:'var(--gray-text)', margin:'3px 0 0' }}>
             {dog.owner_name}{dog.breed ? ` · ${dog.breed}` : ''} · {sessions.length} sessions
           </p>
+          {dog.dog_code && (
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, marginTop:6, background:'var(--cream)', border:'1px solid var(--gray-border)', borderRadius:'var(--radius-sm)', padding:'4px 12px' }}>
+              <span style={{ fontSize:11, color:'var(--gray-text)' }}>Dog code:</span>
+              <span style={{ fontWeight:600, fontSize:14, color:'var(--teal)', letterSpacing:'0.1em' }}>{dog.dog_code}</span>
+              <button onClick={() => { navigator.clipboard.writeText(dog.dog_code); }} style={{ background:'none', border:'none', fontSize:11, color:'var(--coral)', cursor:'pointer', fontFamily:'var(--font-sans)', padding:0 }}>Copy</button>
+            </div>
+          )}
+          </p>
           {dog.notes && <p style={{ fontSize:13, color:'var(--gray-text)', margin:'4px 0 0', fontStyle:'italic' }}>{dog.notes}</p>}
         </div>
         <div style={{ display:'flex', gap:8 }}>
