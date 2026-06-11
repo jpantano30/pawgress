@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendReportPublished } from '../utils/email.js';
 import pool from '../db/pool.js';
 
 const router = Router();
