@@ -113,7 +113,6 @@ export default function DogProfile() {
               <button onClick={() => { navigator.clipboard.writeText(dog.dog_code); }} style={{ background:'none', border:'none', fontSize:11, color:'var(--coral)', cursor:'pointer', fontFamily:'var(--font-sans)', padding:0 }}>Copy</button>
             </div>
           )}
-          </p>
           {dog.notes && <p style={{ fontSize:13, color:'var(--gray-text)', margin:'4px 0 0', fontStyle:'italic' }}>{dog.notes}</p>}
         </div>
         <div style={{ display:'flex', gap:8 }}>
